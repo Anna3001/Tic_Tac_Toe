@@ -12,28 +12,47 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static javafx.scene.paint.Color.*;
 
 public class App extends Application {
 
     private boolean turnX = true;
+    private boolean canPlay = true;
+    private List<Position> positionList = new ArrayList<>();
+    private Square[][] squaresXY = new Square[3][3];
 
     private Parent createMainView() {
         Pane pane = new Pane();
         pane.setPrefSize(600,700);
         pane.setStyle("-fx-background-color: lightgrey;");
 
-        for(int i = 0; i < 3; i++) {
-            for(int j = 0; j < 3; j++) {
+        for(int i = 0; i < 3; i++) {                // i is for Y
+            for(int j = 0; j < 3; j++) {            // j is for X
                 Square square = new Square();
-                square.setTranslateX(i * 200);
-                square.setTranslateY(j * 200);
+                square.setTranslateX(j * 200);
+                square.setTranslateY(i * 200);
+
                 pane.getChildren().add(square);
+
+                squaresXY[j][i] = square;
             }
         }
-        return  pane;
+
+        for (int x = 0; x < 3; x++) {
+            positionList.add(new Position(squaresXY[x][0], squaresXY[x][1], squaresXY[x][2]));
+        }
+
+        for (int y = 0; y < 3; y++) {
+            positionList.add(new Position(squaresXY[0][y], squaresXY[1][y], squaresXY[2][y]));
+        }
+
+        positionList.add(new Position(squaresXY[0][0], squaresXY[1][1], squaresXY[2][2]));
+        positionList.add(new Position(squaresXY[0][2], squaresXY[1][1], squaresXY[2][0]));
+
+        return pane;
     }
 
     @Override
@@ -43,6 +62,33 @@ public class App extends Application {
         stage.setTitle("Tic Tac Toe");
         stage.show();
     }
+
+    private void checkState() {
+        for (Position position : positionList) {
+            if(position.isFull()) {
+                canPlay = false;
+                break;
+            }
+        }
+    }
+
+    private class Position {
+        private Square[] squares;
+
+        public Position(Square... squares) {
+            this.squares = squares;
+        }
+
+        public boolean isFull() {
+            if (squares[0].getMark().isEmpty() || squares[1].getMark().isEmpty() || squares[2].getMark().isEmpty()) {
+                return false;
+            } else {
+                return squares[0].getMark().equals(squares[1].getMark())      // true if marks are equal, false if not
+                        && squares[0].getMark().equals(squares[2].getMark());
+            }
+        }
+    }
+
 
     private class Square extends StackPane {
         private Text mark= new Text();
@@ -58,18 +104,28 @@ public class App extends Application {
             getChildren().addAll(rectangle, mark);
 
             setOnMouseClicked(mouseEvent -> {
+                if(!canPlay) {
+                    return;
+                }
+
                 if (mouseEvent.getButton() == MouseButton.PRIMARY) {
                     if(turnX) {
                         printX();
                         turnX = false;
+                        checkState();
                     } else {
                         printO();
                         turnX = true;
+                        checkState();
                     }
                 } else {
                     return;
                 }
             });
+        }
+
+        public String getMark() {
+            return mark.getText();
         }
 
         private void printO() {
@@ -80,6 +136,7 @@ public class App extends Application {
             mark.setText("X");
         }
     }
+
     public static void main(String[] args) {
         launch();
     }
