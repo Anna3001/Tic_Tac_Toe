@@ -1,5 +1,8 @@
 package com.fx;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -7,10 +10,12 @@ import javafx.scene.Scene;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +28,9 @@ public class App extends Application {
     private boolean canPlay = true;
     private List<Position> positionList = new ArrayList<>();
     private Square[][] squaresXY = new Square[3][3];
+    private Pane pane = new Pane();
 
     private Parent createMainView() {
-        Pane pane = new Pane();
         pane.setPrefSize(600,700);
         pane.setStyle("-fx-background-color: lightgrey;");
 
@@ -67,9 +72,27 @@ public class App extends Application {
         for (Position position : positionList) {
             if(position.isFull()) {
                 canPlay = false;
+                showWinnerAnimation(position);
                 break;
             }
         }
+    }
+
+    private void showWinnerAnimation(Position position) {
+        Line line = new Line();
+        line.setStartX(position.squares[0].getCenterX());
+        line.setStartY(position.squares[0].getCenterY());
+        line.setEndX(position.squares[0].getCenterX());
+        line.setEndY(position.squares[0].getCenterY());
+        line.setStyle(("-fx-stroke: red; -fx-stroke-width: 5"));
+
+        pane.getChildren().add(line);
+
+        Timeline timeline = new Timeline();
+        timeline.getKeyFrames().add(new KeyFrame(Duration.seconds(1),
+                new KeyValue(line.endXProperty(), position.squares[2].getCenterX()),
+                new KeyValue(line.endYProperty(), position.squares[2].getCenterY())));
+        timeline.play();
     }
 
     private class Position {
@@ -104,7 +127,7 @@ public class App extends Application {
             getChildren().addAll(rectangle, mark);
 
             setOnMouseClicked(mouseEvent -> {
-                if(!canPlay) {
+                if (!canPlay) {
                     return;
                 }
 
@@ -122,6 +145,14 @@ public class App extends Application {
                     return;
                 }
             });
+        }
+
+        public double getCenterX() {
+            return getTranslateX() + 100;
+        }
+
+        public double getCenterY() {
+            return getTranslateY() + 100;
         }
 
         public String getMark() {
